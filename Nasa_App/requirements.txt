@@ -4,6 +4,6 @@ google.generativeai
 streamlit 
 pandas 
 matplotlib.pyplot 
-sklearn.preprocessing
+sklearn
 streamlit_lottie 
 requests
