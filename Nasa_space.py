@@ -330,8 +330,9 @@ def mainpage():
     response2=chat_session.send_message("a brief description about this experiment")
     st.title("Space Science Visualization")
 
-    st.header("Suggestions ")
+    st.header("Description ")
     st.write(response2.text)
+    st.subheader("Suggestions")
     st.write(response.text)  # Print the Gemini response to the Streamlit page
     # Create a list of options
 
