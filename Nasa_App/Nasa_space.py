@@ -1,5 +1,4 @@
-import os
-import time
+import sklearn
 import google.generativeai as genai
 import streamlit as st
 import pandas as pd
