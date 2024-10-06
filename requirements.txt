@@ -1,4 +1,3 @@
-time
 google.generativeai 
 streamlit 
 pandas 
