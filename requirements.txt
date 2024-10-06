@@ -1,0 +1,9 @@
+os
+time
+google.generativeai 
+streamlit 
+pandas 
+matplotlib.pyplot 
+sklearn.preprocessing
+streamlit_lottie 
+requests
