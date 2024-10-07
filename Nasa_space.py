@@ -1,15 +1,17 @@
-
-import time
+import sklearn
 import google.generativeai as genai
 import streamlit as st
 import pandas as pd
+import pygwalker as pyg
+import pygal
 import matplotlib.pyplot as plt  # Correct import for submodule
 from sklearn.preprocessing import OneHotEncoder
 from streamlit_lottie import st_lottie
 import requests
+import time
 
 def load_lottieurl(url):
-    r = requests. get (url)
+    r = requests.get(url)
     if r.status_code != 200:
         return None
     return r.json()
@@ -18,7 +20,7 @@ lottie_coding=load_lottieurl("https://lottie.host/e2811820-050a-42ac-a4e6-a97aa1
 # Replace with your actual API key
 genai.configure(api_key="AIzaSyDT7o35Z51qAzMct1iLQaqf2AkVEC1AQaM")
 
-st.sidebar.header("Filter (Use Generate Button to activate filter)")
+st.sidebar.header("Filter (Filters the dataset values displayed)")
 
 def main():
     if "page" not in st.session_state:
@@ -174,6 +176,7 @@ def scatter():
             plt.xticks(rotation=45) 
             st.pyplot(fig, use_container_width=True)
 
+
 @st.cache_data
 def encode_data(df, selected_columns):
     """One-hot encodes the selected columns and caches the result."""
@@ -193,10 +196,10 @@ def histogram():
     # Display sidebar multiselect only if dfselect is chosen
     if dfselect == 'Sample':
         column_names = df1.columns.tolist()
-        selected_columns = st.sidebar.multiselect("Select column name:", options=column_names, default=column_names)
+        selected_columns = st.multiselect('Select Columns for Histogram', column_names)  # Use the multiselect method
     elif dfselect == 'Assay':
         column_names = df2.columns.tolist()
-        selected_columns = st.sidebar.multiselect("Select column name:", options=column_names, default=column_names)
+        selected_columns = st.multiselect('Select Columns for Histogram', column_names) # Use the multiselect method
 
     if st.button('Generate Plot'):
         if len(selected_columns) > 0:
@@ -302,40 +305,42 @@ def mainpage():
 
         st.session_state.uploaded_files = files
 
-    chat_session = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
-        generation_config={
-            "temperature": 1,
-            "top_p": 0.95,
-            "top_k": 64,
-            "max_output_tokens": 8192,
-            "response_mime_type": "text/plain",
-        },
-        system_instruction="Generate only the most relevant answer.Give the answers in one line without much description",
-    ).start_chat(
-        history=[
-            {
-                "role": "user",
-                "parts": [
-                    st.session_state.uploaded_files[0],
-                    st.session_state.uploaded_files[1],
-                    "provide the column name combination and idea for visualization like bar graphs,heat maps, line charts etc ",
-                    "rerun\n",
-                ],
+        # Initialize ai_response1 and ai_response2 within this block
+        # Generate AI response only once when files are uploaded
+        chat_session = genai.GenerativeModel(
+            model_name="gemini-1.5-flash",
+            generation_config={
+                "temperature": 1,
+                "top_p": 0.95,
+                "top_k": 64,
+                "max_output_tokens": 8192,
+                "response_mime_type": "text/plain",
             },
-        ]
-    )
+            system_instruction="Generate only the most relevant answer.Give the answers in one line without much description",
+        ).start_chat(
+            history=[
+                {
+                    "role": "user",
+                    "parts": [
+                        st.session_state.uploaded_files[0],
+                        st.session_state.uploaded_files[1],
+                        "provide the column name combination and idea for visualization like bar graphs,heat maps, line charts etc ",
+                        "rerun\n",
+                    ],
+                },
+            ]
+        )
 
-    response = chat_session.send_message("provide the column name combination for visualization")
-    response2=chat_session.send_message("a brief description about this experiment")
+        st.session_state.ai_response1 = chat_session.send_message("provide the column name combination for visualization")
+        st.session_state.ai_response2 = chat_session.send_message("a brief description about this experiment")
+
+
     st.title("Space Science Visualization")
 
-    st.header("Description ")
-    st.write(response2.text)
-    st.subheader("Suggestions")
-    st.write(response.text)  # Print the Gemini response to the Streamlit page
+    st.header("Suggestions ")
+    st.write(st.session_state.ai_response2.text) 
+    st.write(st.session_state.ai_response1.text)  # Print the Gemini response to the Streamlit page
     # Create a list of options
-
 
     # Create a list of options
     options = ['Line Graph', 'Bar Graph', 'Pie Chart','Scatter Plot','Histogram']
@@ -357,13 +362,29 @@ def mainpage():
     st.write(f'Selected option: {selected_option}')
 
     df1 = pd.read_csv("input_csv1.csv")
+    df2 = pd.read_csv("input_csv2.csv")
 
-    df2=pd.read_csv("input_csv2.csv")
-    # ... (rest of your Streamlit code)
+    # Filter Dataframes
     st.subheader("SAMPLE")
-    st.dataframe(df1)
+    filtered_df1 = df1.copy()
+    column_names1 = df1.columns.tolist()
+    for i, col in enumerate(column_names1):
+        unique_values = df1[col].unique().tolist()
+        selected_values = st.sidebar.multiselect(f"Select {col}:", options=unique_values, default=unique_values, key=f"multiselect_{col}_{i}")  # Add unique key
+        if selected_values:
+            filtered_df1 = filtered_df1[filtered_df1[col].isin(selected_values)]
+    st.dataframe(filtered_df1)
+
     st.subheader("ASSAYS")
-    st.dataframe(df2)
+    filtered_df2 = df2.copy()
+    column_names2 = df2.columns.tolist()
+    for i, col in enumerate(column_names2):
+        unique_values = df2[col].unique().tolist()
+        selected_values = st.sidebar.multiselect(f"Select {col}:", options=unique_values, default=unique_values, key=f"multiselect_{col}_{i}")  # Add unique key
+        if selected_values:
+            filtered_df2 = filtered_df2[filtered_df2[col].isin(selected_values)]
+    st.dataframe(filtered_df2)
+
     # Create a Pygwalker instance
 
 if __name__ == "__main__":
