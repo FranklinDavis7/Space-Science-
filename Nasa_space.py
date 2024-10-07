@@ -2,8 +2,6 @@ import sklearn
 import google.generativeai as genai
 import streamlit as st
 import pandas as pd
-import pygwalker as pyg
-import pygal
 import matplotlib.pyplot as plt  # Correct import for submodule
 from sklearn.preprocessing import OneHotEncoder
 from streamlit_lottie import st_lottie
