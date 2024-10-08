@@ -98,16 +98,15 @@ def bar():
             ax.set_ylabel(selected_column2)
             plt.xticks(rotation=45) 
             st.pyplot(fig, use_container_width=True)
-
 def pie():
     # Get the DataFrames from session state
     df1 = st.session_state.df1
     df2 = st.session_state.df2
 
     # Get the column names from the combined DataFrame
-    dfselect=st.selectbox('Select a CSV file',['Sample','Assay'])
-    if dfselect=='Sample':
-        column_names=df1.columns.tolist()
+    dfselect = st.selectbox('Select a CSV file', ['Sample', 'Assay'])
+    if dfselect == 'Sample':
+        column_names = df1.columns.tolist()
         selected_columns = st.multiselect('Select Columns for Pie Chart', column_names)
         if st.button('Generate Plot'):
             if len(selected_columns) > 0:
@@ -116,14 +115,22 @@ def pie():
                 encoded_data = encoder.fit_transform(df1[selected_columns]).toarray()  # Use `.toarray()` to convert to dense array
                 encoded_df = pd.DataFrame(encoded_data, columns=encoder.get_feature_names_out(selected_columns))
 
-                fig, ax = plt.subplots()
-                ax.pie(encoded_df.sum(), labels=encoded_df.columns, autopct='%1.1f%%', startangle=90)
+                fig, ax = plt.subplots(figsize=(6, 8))  # Adjust figure size for portrait
+                wedges, texts = ax.pie(encoded_df.sum(), labels=None, autopct=None, startangle=90)  # Remove autotexts
                 ax.axis('equal')
+
+                # Calculate percentages
+                percentages = (encoded_df.sum() / encoded_df.sum().sum() * 100).round(1)
+
+                # Create a legend with color patches and percentages
+                legend_patches = [plt.matplotlib.patches.Patch(color=wedge.get_facecolor(), label=f"{label} ({percent}%)")
+                                  for wedge, label, percent in zip(wedges, encoded_df.columns, percentages)]
+                plt.legend(handles=legend_patches, bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
                 st.pyplot(fig)
             else:
                 st.warning("Please select at least one column for the pie chart.")
-    elif dfselect=='Assay':
-        column_names=df2.columns.tolist()
+    elif dfselect == 'Assay':
+        column_names = df2.columns.tolist()
         selected_columns = st.multiselect('Select Columns for Pie Chart', column_names)
         if st.button('Generate Plot'):
             if len(selected_columns) > 0:
@@ -132,48 +139,64 @@ def pie():
                 encoded_data = encoder.fit_transform(df2[selected_columns]).toarray()  # Use `.toarray()` to convert to dense array
                 encoded_df = pd.DataFrame(encoded_data, columns=encoder.get_feature_names_out(selected_columns))
 
-                fig, ax = plt.subplots()
-                ax.pie(encoded_df.sum(), labels=encoded_df.columns, autopct='%1.1f%%', startangle=90)
+                fig, ax = plt.subplots(figsize=(6, 8))  # Adjust figure size for portrait
+                wedges, texts = ax.pie(encoded_df.sum(), labels=None, autopct=None, startangle=90)  # Remove autotexts
                 ax.axis('equal')
+
+                # Calculate percentages
+                percentages = (encoded_df.sum() / encoded_df.sum().sum() * 100).round(1)
+
+                # Create a legend with color patches and percentages
+                legend_patches = [plt.matplotlib.patches.Patch(color=wedge.get_facecolor(), label=f"{label} ({percent}%)")
+                                  for wedge, label, percent in zip(wedges, encoded_df.columns, percentages)]
+                plt.legend(handles=legend_patches, bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
                 st.pyplot(fig)
             else:
                 st.warning("Please select at least one column for the pie chart.")
-
 def scatter():
     # Get the DataFrames from session state
     df1 = st.session_state.df1
     df2 = st.session_state.df2
 
     # Get the column names from the combined DataFrame
-    dfselect=st.selectbox('Select a CSV file',['Sample','Assay'])
-    if dfselect=='Sample':
-        column_names=df1.columns.tolist()
-        selected_column1 = st.selectbox('Select a X-Labe', column_names)
-        selected_column2 = st.selectbox('Select a Y-Label', column_names)
-        if st.button('Generate Plot'):
-            # Create a scatter plot using matplotlib
-            fig, ax = plt.subplots() 
-            ax.scatter(df1[selected_column1], df1[selected_column2])
-            ax.set_title('Scatter Plot')
-            ax.set_xlabel(selected_column1)
-            ax.set_ylabel(selected_column2)
-            plt.xticks(rotation=45) 
-            st.pyplot(fig, use_container_width=True)
-
-    elif dfselect=='Assay':
-        column_names=df2.columns.tolist()
-        selected_column1 = st.selectbox('Select a X-Labe', column_names)
-        selected_column2 = st.selectbox('Select a Y-Label', column_names)
+    dfselect = st.selectbox('Select a CSV file', ['Sample', 'Assay'])
+    if dfselect == 'Sample':
+        column_names = df1.columns.tolist()
+        selected_column1 = st.selectbox('Select X-Axis', column_names)
+        selected_column2 = st.selectbox('Select Y-Axis', column_names)
         if st.button('Generate Plot'):
             # Create a scatter plot using matplotlib
             fig, ax = plt.subplots()
-            ax.scatter(df2[selected_column1], df2[selected_column2])
+
+            # Sort the DataFrame based on the X-Axis column
+            df1_sorted = df1.sort_values(by=selected_column1)
+
+            # Plot the scatter plot using the sorted DataFrame
+            ax.scatter(df1_sorted[selected_column1], df1_sorted[selected_column2], s=50, c='blue', alpha=0.7)
             ax.set_title('Scatter Plot')
             ax.set_xlabel(selected_column1)
             ax.set_ylabel(selected_column2)
-            plt.xticks(rotation=45) 
+            plt.xticks(rotation=45)
             st.pyplot(fig, use_container_width=True)
 
+    elif dfselect == 'Assay':
+        column_names = df2.columns.tolist()
+        selected_column1 = st.selectbox('Select X-Axis', column_names)
+        selected_column2 = st.selectbox('Select Y-Axis', column_names)
+        if st.button('Generate Plot'):
+            # Create a scatter plot using matplotlib
+            fig, ax = plt.subplots()
+
+            # Sort the DataFrame based on the X-Axis column
+            df2_sorted = df2.sort_values(by=selected_column1)
+
+            # Plot the scatter plot using the sorted DataFrame
+            ax.scatter(df2_sorted[selected_column1], df2_sorted[selected_column2], s=50, c='red', alpha=0.7)
+            ax.set_title('Scatter Plot')
+            ax.set_xlabel(selected_column1)
+            ax.set_ylabel(selected_column2)
+            plt.xticks(rotation=45)
+            st.pyplot(fig, use_container_width=True)
 
 @st.cache_data
 def encode_data(df, selected_columns):
@@ -204,19 +227,30 @@ def histogram():
             # Use cached one-hot encoding
             encoded_df = encode_data(df1 if dfselect == 'Sample' else df2, selected_columns)
 
-            fig, ax = plt.subplots(figsize=(10, 6))
-            for column in encoded_df.columns:
-                ax.hist(encoded_df[column], label=column, alpha=0.5, width=0.5)
+            fig, ax = plt.subplots(figsize=(10, 6))  # Increased figure size
+
+            # Plot each histogram with a unique color
+            colors = ['red', 'blue', 'green', 'orange', 'purple', 'brown', 'cyan']  # Add more colors as needed
+            for i, column in enumerate(encoded_df.columns):
+                ax.hist(encoded_df[column], label=column, alpha=0.5, width=0.5, color=colors[i % len(colors)])
+
             ax.set_title('Histogram')
             ax.set_xlabel('Values')
             ax.set_ylabel('Frequency')
-            ax.legend(loc='upper right', bbox_to_anchor=(1.2, 1))
+
+            # Calculate percentages for each column
+            percentages = (encoded_df.sum() / encoded_df.sum().sum() * 100).round(1)
+
+            # Create a legend with color patches and percentages
+            legend_patches = [plt.matplotlib.patches.Patch(color=color, label=f"{column} ({percent}%)")
+                              for i, (column, color, percent) in enumerate(zip(encoded_df.columns, colors, percentages))]
+            plt.legend(handles=legend_patches, bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)  # Adjust legend position
+
             plt.xticks(rotation=45)
-            plt.tight_layout()
+            plt.tight_layout()  # Adjusts spacing
             st.pyplot(fig)
         else:
             st.warning("Please select at least one column for the histogram.")
-
 def home():
 
     st.title("BioVis ")
